@@ -2,9 +2,12 @@ package com.asaad27.ui.components
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.CardColors
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ElevatedCard
@@ -32,12 +35,14 @@ fun <T> ClipboardItemCard(
     modifier: Modifier = Modifier,
     item: T,
     isFocused: Boolean = false,
+    isScrollable: Boolean = false,
     onItemClicked: (T) -> Unit,
     icons: List<IconData<T>> = listOf(),
     content: @Composable () -> Unit
 ) {
     val isHovered = remember { mutableStateOf(false) }
     val isPressed = remember { mutableStateOf(false) }
+    val scrollState = rememberScrollState()
 
     ElevatedCard(
         colors = determineCardColors(isPressed.value, isHovered.value, isFocused),
@@ -49,7 +54,7 @@ fun <T> ClipboardItemCard(
             disabledElevation = CardElevation.disabled
         ),
         modifier = modifier
-            .clickable(onClick = { onItemClicked(item) })
+            .clickable { onItemClicked(item) }
             .onKeyEvent {
                 if (it.type == KeyEventType.KeyDown && it.key == Key.Enter) {
                     onItemClicked(item)
@@ -69,7 +74,16 @@ fun <T> ClipboardItemCard(
         Box(
             modifier = Modifier.fillMaxSize()
         ) {
-            content()
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .then(
+                        if (isScrollable) Modifier.verticalScroll(scrollState)
+                        else Modifier
+                    )
+            ) {
+                content()
+            }
 
             if (icons.isNotEmpty()) {
                 Row(
@@ -82,7 +96,7 @@ fun <T> ClipboardItemCard(
                             contentDescription = iconData.description,
                             modifier = Modifier
                                 .padding(end = 4.dp)
-                                .clickable(onClick = { iconData.onClick(item) })
+                                .clickable { iconData.onClick(item) }
                         )
                     }
                 }
