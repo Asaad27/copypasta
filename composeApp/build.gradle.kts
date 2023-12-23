@@ -27,16 +27,41 @@ kotlin {
             }
         }
     }
-    
+
     jvm("desktop")
-    
+
     sourceSets {
-        val desktopMain by getting
+        val jvmMain by creating {
+            dependsOn(commonMain.get())
+        }
+
+        val androidMain by getting {
+            dependsOn(jvmMain)
+        }
+        val desktopMain by getting {
+            dependsOn(jvmMain)
+        }
+
+        jvmMain.dependencies{
+            implementation(libs.koin.core)
+            implementation(libs.exposed.core)
+            implementation(libs.exposed.crypt)
+            implementation(libs.exposed.dao)
+            implementation(libs.exposed.jdbc)
+            implementation(libs.exposed.kotlin.datetime)
+            implementation(libs.exposed.money)
+        }
         
         androidMain.dependencies {
             implementation(libs.compose.ui.tooling.preview)
             implementation(libs.androidx.activity.compose)
+
         }
+
+        desktopMain.dependencies {
+            implementation(compose.desktop.currentOs)
+        }
+
         commonMain.dependencies {
             implementation(compose.runtime)
             implementation(compose.foundation)
@@ -45,9 +70,6 @@ kotlin {
             @OptIn(ExperimentalComposeLibrary::class)
             implementation(compose.components.resources)
             implementation(libs.kotlinx.datetime.v050)
-        }
-        desktopMain.dependencies {
-            implementation(compose.desktop.currentOs)
         }
     }
 }

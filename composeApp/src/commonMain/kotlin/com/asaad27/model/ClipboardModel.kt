@@ -7,7 +7,6 @@ import kotlinx.datetime.toLocalDateTime
 
 data class ClipboardModel(
     val id: Int? = null,
-    val preview: String = "",
     val fullContent: String = "",
     var lastUpdated: LocalDateTime = Clock.System.now().toLocalDateTime(TimeZone.UTC)
 ) {

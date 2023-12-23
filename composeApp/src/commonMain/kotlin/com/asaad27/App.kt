@@ -21,7 +21,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.asaad27.model.ClipboardModel
@@ -32,52 +31,57 @@ import com.asaad27.ui.theme.CommonTheme
 
 @Composable
 fun App() {
-    CommonTheme(useDarkTheme = true) {
+    CommonTheme {
         Scaffold(
-            bottomBar = {
-                BottomAppBar(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer,
-                    contentColor = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .requiredHeight(56.dp)
-                ) {
-                    Text(
-                        modifier = Modifier
-                            .fillMaxWidth(),
-                        textAlign = TextAlign.Center,
-                        text = "Bottom app bar",
-                    )
-                }
-            },
-        ) { innerPadding ->
-            Box(
-                modifier = Modifier
-                    .padding(innerPadding)
-                    .fillMaxSize()
-            ) {
-
-                ClipboardList(
-                    clipboardItems = listOf(
-                        ClipboardModel(14, "Hello"),
-                        ClipboardModel(15, "Hello again"),
-                    ),
-                    focusedItemIndex = null,
-                    lazyListState = LazyListState(),
-                )
-
-                SearchBarComponent(
-                    modifier = Modifier
-                        .align(Alignment.BottomCenter)
-                        .padding(8.dp),
-                    focusRequester = FocusRequester(),
-                    searchText = "",
-                    onExit = {},
-                    onSearchTextChanged = {}
-                )
-
-            }
+            bottomBar = { BottomBar() }
+        ) { paddingValues ->
+            ClipboardScreen(modifier = Modifier.padding(paddingValues))
         }
+    }
+}
+
+@Composable
+fun BottomBar() {
+    BottomAppBar(
+        containerColor = MaterialTheme.colorScheme.primaryContainer,
+        contentColor = MaterialTheme.colorScheme.primary,
+        modifier = Modifier
+            .fillMaxWidth()
+            .requiredHeight(56.dp)
+    ) {
+        Text(
+            modifier = Modifier.fillMaxWidth(),
+            textAlign = TextAlign.Center,
+            text = "Bottom app bar",
+        )
+    }
+}
+
+@Composable
+fun ClipboardScreen(
+    modifier: Modifier = Modifier,
+) {
+    Box(
+        modifier = modifier.fillMaxSize()
+    ) {
+
+        ClipboardList(
+            clipboardItems = listOf(
+                ClipboardModel(14, "Hello"),
+                ClipboardModel(15, "Hello again"),
+            ),
+            focusedItemIndex = null,
+            lazyListState = LazyListState(),
+        )
+
+        SearchBarComponent(
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(8.dp),
+            searchText = "",
+            onExit = {},
+            onSearchTextChanged = {}
+        )
     }
 }
 
@@ -125,7 +129,7 @@ fun ClipboardList(
                 )
             ) {
                 Text(
-                    text = item.preview.repeat(1000),
+                    text = item.fullContent.repeat(1000),
                     modifier = Modifier
                         .padding(top = 24.dp, start = 8.dp, end = 10.dp, bottom = 4.dp)
                 )
