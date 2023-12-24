@@ -20,13 +20,15 @@ import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+
+const val debouncePeriod = 500L
 
 @Composable
 fun SearchBarComponent(
     focusRequester: FocusRequester,
-    //searchText: String,
     label: String = "Search",
     modifier: Modifier = Modifier,
     onExit: () -> Unit,
@@ -34,7 +36,7 @@ fun SearchBarComponent(
 ) {
     val isFocusCaptured = remember { mutableStateOf(false) }
     var searchText by remember { mutableStateOf("") }
-    val debouncePeriod = 300L
+    var debounceJob by remember { mutableStateOf<Job?>(null) }
     val coroutineScope = rememberCoroutineScope()
 
     Row(
@@ -48,16 +50,12 @@ fun SearchBarComponent(
             maxLines = 1,
             onValueChange = {
                 searchText = it
-                coroutineScope.launch {
+                debounceJob?.cancel()
+                debounceJob = coroutineScope.launch {
                     delay(debouncePeriod)
-                    if (searchText == it) {
-                        onSearchTextChanged(it)
-                    }
+                    onSearchTextChanged(it)
                 }
-                if (!isFocusCaptured.value) {
-                    isFocusCaptured.value = true
-                    focusRequester.captureFocus()
-                }
+                captureFocusIfNotCaptured(focusRequester, isFocusCaptured.value)
             },
             modifier = Modifier
                 .weight(1f)
@@ -74,6 +72,15 @@ fun SearchBarComponent(
                 cursorColor = MaterialTheme.colorScheme.primary
             )
         )
+    }
+}
+
+private fun captureFocusIfNotCaptured(
+    focusRequester: FocusRequester,
+    isFocusCaptured: Boolean
+) {
+    if (!isFocusCaptured) {
+        focusRequester.captureFocus()
     }
 }
 

@@ -65,9 +65,7 @@ fun ClipboardScreen(
                     .weight(1f)
                     .focusRequester(listFocusRequester)
                     .focusable()
-                    .onKeyEvent {
-                        viewModel.onKeyEvent(it)
-                    },
+                    .onKeyEvent(viewModel::onKeyEvent),
                 clipboardItems = uiState.clipboardContents,
                 focusedItemIndex = uiState.focusedIndex,
                 lazyListState = lazyListState,
@@ -77,7 +75,6 @@ fun ClipboardScreen(
             SearchBarComponent(
                 modifier = Modifier.align(Alignment.CenterHorizontally),
                 focusRequester = searchBarFocusRequester,
-                //searchText = uiState.searchText,
                 onExit = {
                     searchBarFocusRequester.freeFocus()
                     listFocusRequester.requestFocus()
