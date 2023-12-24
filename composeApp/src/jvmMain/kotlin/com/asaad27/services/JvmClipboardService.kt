@@ -21,7 +21,7 @@ class JvmClipboardService(
         return clipboardRepository.getAll()
     }
 
-    override fun searchClipboardContents(query: String): Flow<ClipboardModel> {
+    override suspend fun searchClipboardContents(query: String): Flow<ClipboardModel> {
         return clipboardRepository.search(query)
     }
 

@@ -20,6 +20,7 @@ junit = "4.13.2"
 koinCore = "3.4.3"
 kotlin = "1.9.21"
 kotlinxDatetime = "0.4.0-wasm0"
+sqliteJdbc = "3.44.0.0"
 
 [libraries]
 exposed-core = { module = "org.jetbrains.exposed:exposed-core", version.ref = "exposedCore" }
@@ -47,6 +48,7 @@ compose-foundation = { module = "androidx.compose.foundation:foundation", versio
 compose-material = { module = "androidx.compose.material:material", version.ref = "compose" }
 kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.ref = "kotlinxDatetime" }
 kotlinx-datetime-v050 = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.ref = "jetbrains-kotlinxDatetime" }
+sqlite-jdbc = { module = "org.xerial:sqlite-jdbc", version.ref = "sqliteJdbc" }
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }

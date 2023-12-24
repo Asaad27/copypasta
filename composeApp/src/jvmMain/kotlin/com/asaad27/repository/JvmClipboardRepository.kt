@@ -57,8 +57,9 @@ class JvmClipboardRepository(
         }.map { it.toClipboardModel() }
     }
 
-    override fun search(query: String): Flow<ClipboardModel> = channelFlow {
+    override suspend fun search(query: String): Flow<ClipboardModel> = channelFlow {
         newSuspendedTransaction(Dispatchers.IO) {
+            addLogger(StdOutSqlLogger)
             ClipboardTable
                 .select { ClipboardTable.content like "%$query%" }
                 .forEach { row ->

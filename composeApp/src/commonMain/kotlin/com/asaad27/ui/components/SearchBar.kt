@@ -1,7 +1,5 @@
 package com.asaad27.ui.components
 
-import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.interaction.PressInteraction
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
@@ -9,8 +7,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
@@ -22,14 +18,13 @@ import androidx.compose.ui.unit.dp
 
 @Composable
 fun SearchBarComponent(
+    focusRequester: FocusRequester,
     searchText: String,
     label: String = "Search",
     modifier: Modifier = Modifier,
     onExit: () -> Unit,
     onSearchTextChanged: (String) -> Unit,
 ) {
-    val focusRequester = remember { FocusRequester() }
-
     Row(
         modifier = modifier,
         verticalAlignment = Alignment.CenterVertically
@@ -37,19 +32,12 @@ fun SearchBarComponent(
         TextField(
             value = searchText,
             label = { Text(label) },
+            singleLine = true,
+            maxLines = 1,
             onValueChange = {
                 onSearchTextChanged(it)
+                focusRequester.captureFocus()
             },
-            interactionSource = remember { MutableInteractionSource() }
-                .also { interactionSource ->
-                    LaunchedEffect(interactionSource) {
-                        interactionSource.interactions.collect {
-                            if (it is PressInteraction.Release) {
-                                focusRequester.captureFocus()
-                            }
-                        }
-                    }
-                },
             modifier = Modifier
                 .weight(1f)
                 .padding(8.dp)

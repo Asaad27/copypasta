@@ -6,7 +6,7 @@ import kotlinx.coroutines.flow.Flow
 interface IClipboardRepository {
     suspend fun save(content: ClipboardModel): ClipboardModel
     suspend fun getAll(): List<ClipboardModel>
-    fun search(query: String): Flow<ClipboardModel>
+    suspend fun search(query: String): Flow<ClipboardModel>
     suspend fun getClipboardContentByContent(fullContent: String): ClipboardModel?
 }
 

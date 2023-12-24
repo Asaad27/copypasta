@@ -1,15 +1,21 @@
 package com.asaad27.ui.viewmodel
 
 import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEvent
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.type
 import com.asaad27.model.ClipboardModel
 import com.asaad27.services.IClipboardService
 import com.asaad27.services.ISystemClipboardService
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
 
 
 class ClipboardViewModel(
@@ -17,10 +23,14 @@ class ClipboardViewModel(
     private val systemClipboard: ISystemClipboardService,
     private val clipboardService: IClipboardService
 ) : ViewModel(viewModelScope) {
-    //private val logger = LoggerFactory.getLogger(javaClass)
 
     private val _uiState = MutableStateFlow(ClipboardContentScreenState())
     val uiState = _uiState.asStateFlow()
+
+    private val _firstVisibleItemIndex = MutableStateFlow(0)
+
+    private val _isFloatingDownButtonVisible = MutableStateFlow(false)
+    val isFloatingDownButtonVisible = _isFloatingDownButtonVisible.asStateFlow()
 
     private val _shouldMinimize = MutableStateFlow(false)
     val shouldMinimize = _shouldMinimize.asStateFlow()
@@ -49,18 +59,30 @@ class ClipboardViewModel(
                 filteredClipboardContents = it.toList()
             }
         }
+
+        viewModelScope.launch {
+            combine(
+                _uiState.map { it.clipboardContents.size },
+                _firstVisibleItemIndex
+            ) { totalItems, currentFirstVisibleIndex ->
+                totalItems >= 8 && currentFirstVisibleIndex < totalItems - 8
+            }.collect { isVisible ->
+                _isFloatingDownButtonVisible.value = isVisible
+            }
+        }
     }
 
-    private suspend fun monitorClipboard() {
-        systemClipboard.clipboardFlow().collect { systemClipboardContent ->
-            val content =
-                clipboardService.getByContent(systemClipboardContent.fullContent) ?: systemClipboardContent
+    private fun monitorClipboard() {
+        viewModelScope.launch {
+            systemClipboard.clipboardFlow().collect { systemClipboardContent ->
+                val content =
+                    clipboardService.getByContent(systemClipboardContent.fullContent) ?: systemClipboardContent
 
-            clipboardService.saveClipboardContent(content).also {
-                //logger.debug("saved: {}", it.preview)
-                originalClipboardContents += it
-                if (!isSearching) {
-                    filteredClipboardContents += it
+                clipboardService.saveClipboardContent(content).also {
+                    originalClipboardContents += it
+                    if (!isSearching) {
+                        filteredClipboardContents += it
+                    }
                 }
             }
         }
@@ -81,7 +103,12 @@ class ClipboardViewModel(
         } else {
             searchJob = viewModelScope.launch {
                 delay(searchDebounceTime)
+                var isFirstElement = true
                 clipboardService.searchClipboardContents(value).collect {
+                    if (isFirstElement) {
+                       filteredClipboardContents = emptyList()
+                        isFirstElement = false
+                    }
                     filteredClipboardContents += it
                 }
             }
@@ -90,7 +117,6 @@ class ClipboardViewModel(
     }
 
     fun onItemClicked(item: ClipboardModel) {
-        //logger.debug("onItemClicked: {}", item)
         viewModelScope.launch {
             systemClipboard.setCurrentContent(item)
             pasteContent()
@@ -101,36 +127,43 @@ class ClipboardViewModel(
         _shouldMinimize.value = false
     }
 
-    fun onScrollToItem(index: Int) {
+    fun onScrollToLastItem() {
+        val index = _uiState.value.clipboardContents.size - 1
+        onScrollToItem(index)
+    }
+
+    private fun onScrollToItem(index: Int) {
         updateFocusedElement(index)
     }
 
-    fun onKeyEvent(keyEvent: androidx.compose.ui.input.key.KeyEvent): Boolean {
-        if (keyEvent.type != KeyEventType.KeyDown) {
-            return false
-        }
+    fun onSearchExit() {
+        handleKeyAction(Key.DirectionUp)
+    }
 
+    fun onKeyEvent(keyEvent: KeyEvent): Boolean {
+        if (keyEvent.type != KeyEventType.KeyDown) return false
+        handleKeyAction(keyEvent.key)
+        return true
+    }
+
+    fun updateFirstVisibleItemIndex(index: Int) {
+        println("updateFirstVisibleItemIndex: $index")
+        _firstVisibleItemIndex.value = index
+    }
+
+    private fun handleKeyAction(key: Key) {
         val currentState = _uiState.value
-        if (keyEvent.key == Key.Enter) {
-            _uiState.value.focusedIndex?.let {
+        when (key) {
+            Key.DirectionDown -> updateFocusedElement(
+                minOf((currentState.focusedIndex ?: -1) + 1, currentState.clipboardContents.size - 1)
+            )
+            Key.DirectionUp -> updateFocusedElement(
+                maxOf((currentState.focusedIndex ?: currentState.clipboardContents.size) - 1, 0)
+            )
+            Key.Enter -> currentState.focusedIndex?.let {
                 onItemClicked(currentState.clipboardContents[it])
             }
-            return true
         }
-
-        val clipboardSize = currentState.clipboardContents.size
-        val newFocusedIndex = when (keyEvent.key) {
-            Key.DirectionDown -> minOf((currentState.focusedIndex ?: -1) + 1, clipboardSize - 1)
-            Key.DirectionUp -> maxOf((currentState.focusedIndex ?: clipboardSize) - 1, 0)
-            else -> null
-        }
-
-        if (newFocusedIndex != null) {
-            updateFocusedElement(newFocusedIndex)
-            return true
-        }
-
-        return false
     }
 
     private fun pasteContent() {
@@ -149,8 +182,8 @@ class ClipboardViewModel(
 
     private fun updateFocusedElement(index: Int?) {
         val currentState = _uiState.value
-        val element = index ?: maxOf(0, (currentState.clipboardContents.size - 1))
-        _uiState.value = currentState.copy(focusedIndex = element, indexToScrollTo = element)
+        val indexToScrollTo = index ?: maxOf(0, (currentState.clipboardContents.size - 1))
+        _uiState.value = currentState.copy(focusedIndex = index, indexToScrollTo = indexToScrollTo)
     }
 
 }
