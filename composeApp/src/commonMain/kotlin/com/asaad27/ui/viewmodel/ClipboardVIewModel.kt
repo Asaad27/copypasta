@@ -17,7 +17,6 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 
-
 class ClipboardViewModel(
     viewModelScope: CoroutineScope,
     private val systemClipboard: ISystemClipboardService,
@@ -28,36 +27,19 @@ class ClipboardViewModel(
     val uiState = _uiState.asStateFlow()
 
     private val _firstVisibleItemIndex = MutableStateFlow(0)
-
     private val _isFloatingDownButtonVisible = MutableStateFlow(false)
     val isFloatingDownButtonVisible = _isFloatingDownButtonVisible.asStateFlow()
 
     private val _shouldMinimize = MutableStateFlow(false)
     val shouldMinimize = _shouldMinimize.asStateFlow()
 
-    private var originalClipboardContents = listOf<ClipboardModel>()
-
-    private var filteredClipboardContents = listOf<ClipboardModel>()
-        set(value) {
-            field = value
-            updateClipboardContents(value)
-            updateFocusedElement(null)
-        }
-
-    private var isSearching: Boolean = false
+    private var originalClipboardContents = mutableListOf<ClipboardModel>()
     private var searchJob: Job? = null
-    private val searchDebounceTime = 700L
 
     init {
         viewModelScope.launch {
+            loadInitialClipboardContents()
             monitorClipboard()
-        }
-
-        viewModelScope.launch {
-            clipboardService.getAllClipboardContents().let {
-                originalClipboardContents = it
-                filteredClipboardContents = it.toList()
-            }
         }
 
         viewModelScope.launch {
@@ -72,48 +54,21 @@ class ClipboardViewModel(
         }
     }
 
-    private fun monitorClipboard() {
-        viewModelScope.launch {
-            systemClipboard.clipboardFlow().collect { systemClipboardContent ->
-                val content =
-                    clipboardService.getByContent(systemClipboardContent.fullContent) ?: systemClipboardContent
-
-                clipboardService.saveClipboardContent(content).also {
-                    originalClipboardContents += it
-                    if (!isSearching) {
-                        filteredClipboardContents += it
-                    }
-                }
-            }
-        }
-    }
-
-    override fun clear() {
-        super.clear()
-        searchJob?.cancel()
-    }
-
     fun onSearchClipboardContent(value: String) {
-        _uiState.value = _uiState.value.copy(searchText = value)
+        val isSearching = value.isNotEmpty()
+        _uiState.value = _uiState.value.copy(searchText = value, isSearching = isSearching)
         searchJob?.cancel()
-        isSearching = value.isNotEmpty()
 
-        if (value.isEmpty()) {
+        if (!isSearching) {
             updateClipboardContents(originalClipboardContents)
         } else {
             searchJob = viewModelScope.launch {
-                delay(searchDebounceTime)
-                var isFirstElement = true
-                clipboardService.searchClipboardContents(value).collect {
-                    if (isFirstElement) {
-                       filteredClipboardContents = emptyList()
-                        isFirstElement = false
-                    }
-                    filteredClipboardContents += it
+                updateClipboardContents(emptyList())
+                clipboardService.searchClipboardContents(value).collect { searchResult ->
+                    updateClipboardContents(_uiState.value.clipboardContents + searchResult)
                 }
             }
         }
-
     }
 
     fun onItemClicked(item: ClipboardModel) {
@@ -128,12 +83,8 @@ class ClipboardViewModel(
     }
 
     fun onScrollToLastItem() {
-        val index = _uiState.value.clipboardContents.size - 1
-        onScrollToItem(index)
-    }
-
-    private fun onScrollToItem(index: Int) {
-        updateFocusedElement(index)
+        val lastIndex = _uiState.value.clipboardContents.size - 1
+        updateFocusedElement(lastIndex)
     }
 
     fun onSearchExit() {
@@ -141,27 +92,45 @@ class ClipboardViewModel(
     }
 
     fun onKeyEvent(keyEvent: KeyEvent): Boolean {
-        if (keyEvent.type != KeyEventType.KeyDown) return false
-        handleKeyAction(keyEvent.key)
-        return true
+        if (keyEvent.type == KeyEventType.KeyDown) {
+            handleKeyAction(keyEvent.key)
+            return true
+        }
+        return false
     }
 
     fun updateFirstVisibleItemIndex(index: Int) {
-        println("updateFirstVisibleItemIndex: $index")
         _firstVisibleItemIndex.value = index
     }
 
     private fun handleKeyAction(key: Key) {
-        val currentState = _uiState.value
+        val focusedIndex = _uiState.value.focusedIndex
+        val clipboardSize = _uiState.value.clipboardContents.size
+
         when (key) {
-            Key.DirectionDown -> updateFocusedElement(
-                minOf((currentState.focusedIndex ?: -1) + 1, currentState.clipboardContents.size - 1)
-            )
-            Key.DirectionUp -> updateFocusedElement(
-                maxOf((currentState.focusedIndex ?: currentState.clipboardContents.size) - 1, 0)
-            )
-            Key.Enter -> currentState.focusedIndex?.let {
-                onItemClicked(currentState.clipboardContents[it])
+            Key.DirectionDown -> updateFocusedElement(minOf((focusedIndex ?: -1) + 1, clipboardSize - 1))
+            Key.DirectionUp -> updateFocusedElement(maxOf((focusedIndex ?: clipboardSize) - 1, 0))
+            Key.Enter -> focusedIndex?.let { onItemClicked(_uiState.value.clipboardContents[it]) }
+        }
+    }
+
+    private suspend fun loadInitialClipboardContents() {
+        clipboardService.getAllClipboardContents().let { clipboardContents ->
+            originalClipboardContents.addAll(clipboardContents)
+            updateClipboardContents(clipboardContents)
+        }
+    }
+
+    private suspend fun monitorClipboard() {
+        systemClipboard.clipboardFlow().collect { systemClipboardContent ->
+            val content =
+                clipboardService.getByContent(systemClipboardContent.fullContent) ?: systemClipboardContent
+
+            clipboardService.saveClipboardContent(content).also {
+                originalClipboardContents.add(it)
+                if (!uiState.value.isSearching) {
+                    updateClipboardContents(originalClipboardContents)
+                }
             }
         }
     }
@@ -176,22 +145,18 @@ class ClipboardViewModel(
     }
 
     private fun updateClipboardContents(contents: List<ClipboardModel>) {
-        val currentState = _uiState.value
-        _uiState.value = currentState.copy(clipboardContents = contents)
+        _uiState.value = _uiState.value.copy(clipboardContents = contents)
     }
 
-    private fun updateFocusedElement(index: Int?) {
-        val currentState = _uiState.value
-        val indexToScrollTo = index ?: maxOf(0, (currentState.clipboardContents.size - 1))
-        _uiState.value = currentState.copy(focusedIndex = index, indexToScrollTo = indexToScrollTo)
+    private fun updateFocusedElement(index: Int) {
+        _uiState.value = _uiState.value.copy(focusedIndex = index, indexToScrollTo = index)
     }
-
 }
 
 data class ClipboardContentScreenState(
     val focusedIndex: Int? = null,
-    val copiedItemIndex: Int? = null,
     val searchText: String = "",
+    val isSearching: Boolean = false,
     val indexToScrollTo: Int? = null,
-    val clipboardContents: List<ClipboardModel> = emptyList(),
+    val clipboardContents: List<ClipboardModel> = emptyList()
 )

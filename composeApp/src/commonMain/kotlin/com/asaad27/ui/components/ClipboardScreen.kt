@@ -77,7 +77,7 @@ fun ClipboardScreen(
             SearchBarComponent(
                 modifier = Modifier.align(Alignment.CenterHorizontally),
                 focusRequester = searchBarFocusRequester,
-                searchText = uiState.searchText,
+                //searchText = uiState.searchText,
                 onExit = {
                     searchBarFocusRequester.freeFocus()
                     listFocusRequester.requestFocus()
