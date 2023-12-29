@@ -8,6 +8,8 @@ plugins {
     alias(libs.plugins.jetbrainsCompose)
 }
 
+val myAttribute = Attribute.of("foo", String::class.java)
+
 kotlin {
     @OptIn(ExperimentalWasmDsl::class)
     wasmJs {
@@ -28,40 +30,39 @@ kotlin {
         }
     }
 
-    jvm("desktop")
+    jvm("desktop") {
+        attributes.attribute(myAttribute, "desktop")
+    }
+    jvm("jvm") {
+        attributes.attribute(myAttribute, "jvm")
+    }
 
     sourceSets {
-        val jvmMain by creating {
-            dependsOn(commonMain.get())
+        val jvmMain by getting {
+            //dependsOn(commonMain.get())
         }
 
         val androidMain by getting {
-            dependsOn(jvmMain)
+
         }
+
         val desktopMain by getting {
-            dependsOn(jvmMain)
-        }
-
-        jvmMain.dependencies{
-            implementation(libs.koin.core)
-            implementation(libs.exposed.core)
-            implementation(libs.exposed.crypt)
-            implementation(libs.exposed.dao)
-            implementation(libs.exposed.jdbc)
-            implementation(libs.exposed.kotlin.datetime)
-            implementation(libs.exposed.money)
-            implementation(libs.sqlite.jdbc)
-        }
-        
-        androidMain.dependencies {
-            implementation(libs.compose.ui.tooling.preview)
-            implementation(libs.androidx.activity.compose)
 
         }
 
-        desktopMain.dependencies {
-            implementation(compose.desktop.currentOs)
+        val desktopTest by getting {
+            //dependsOn(commonTest.get())
+            dependencies {
+                implementation(kotlin("test-junit"))
+            }
         }
+
+        val jvmTest by getting {
+            dependencies {
+                implementation(kotlin("test-junit"))
+            }
+        }
+
 
         commonMain.dependencies {
             implementation(compose.runtime)
@@ -72,6 +73,28 @@ kotlin {
             implementation(compose.components.resources)
             implementation(libs.kotlinx.datetime.v050)
         }
+
+        jvmMain.dependencies{
+            implementation(libs.exposed.core)
+            implementation(libs.exposed.crypt)
+            implementation(libs.exposed.dao)
+            implementation(libs.exposed.jdbc)
+            implementation(libs.exposed.kotlin.datetime)
+            implementation(libs.exposed.money)
+            implementation(libs.sqlite.jdbc)
+            implementation(libs.koin.core)
+        }
+
+        androidMain.dependencies {
+            implementation(libs.compose.ui.tooling.preview)
+            implementation(libs.androidx.activity.compose)
+            implementation(libs.koin.android.v353)
+        }
+
+        desktopMain.dependencies {
+            implementation(compose.desktop.currentOs)
+        }
+
     }
 }
 
@@ -110,6 +133,7 @@ android {
 }
 dependencies {
     implementation(libs.androidx.constraintlayout)
+    testImplementation(project(":composeApp"))
 }
 
 compose.desktop {

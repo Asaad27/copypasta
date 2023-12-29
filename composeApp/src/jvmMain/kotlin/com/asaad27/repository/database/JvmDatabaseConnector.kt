@@ -5,53 +5,44 @@ import org.jetbrains.exposed.sql.Database
 import java.util.Properties
 
 class JvmDatabaseConnector: IDatabaseConnector {
+    private val properties: Properties by lazy {
+        loadProperties()
+    }
+
     private val uri: String by lazy {
-        loadDatabaseUrl()
+        properties.getProperty("db.url", "jdbc:sqlite::memory:clipboard")
     }
 
     private val driver: String by lazy {
-        loadDatabaseDriver()
+        properties.getProperty("db.driver", "org.sqlite.JDBC")
     }
 
-    private val user by lazy {
-        loadUser()
+    private val user: String by lazy {
+        properties.getProperty("db.user", "root")
     }
 
-    private val password by lazy {
-        loadPassword()
-    }
-
-    private val properties by lazy {
-        Properties()
+    private val password: String by lazy {
+        properties.getProperty("db.password", "")
     }
 
     override fun connect() {
-        Database.connect(uri, driver = driver, user = user, password = password)
+        try {
+            Database.connect(uri, driver = driver, user = user, password = password)
+        } catch (e: Exception) {
+            throw Exception("Failed to connect to the database", e)
+        }
     }
 
-    private fun loadPassword(): String {
-        return getResource("db.password", "")
-    }
-
-    private fun loadUser(): String {
-        return getResource("db.user", "root")
-    }
-
-    private fun loadDatabaseUrl(): String {
-        return getResource("db.url", "jdbc:sqlite::memory:clipboard")
-    }
-
-    private fun loadDatabaseDriver(): String {
-        return getResource("db.driver", "org.sqlite.JDBC")
-    }
-
-    private fun getResource(key: String, defaultValue: String? = null): String {
-        javaClass.classLoader?.getResourceAsStream("dbconfig.properties").use { inputStream ->
-            if (inputStream == null) {
-                throw IllegalStateException("Missing 'dbconfig.properties'")
-            }
+    private fun loadProperties(): Properties {
+        val properties = Properties()
+        javaClass.classLoader?.getResourceAsStream("dbconfig.properties")?.use { inputStream ->
             properties.load(inputStream)
         }
-        return properties.getProperty(key, defaultValue)
+        return properties
+    }
+
+    private fun decryptPassword(encryptedPassword: String): String {
+        TODO("Not yet implemented")
+
     }
 }

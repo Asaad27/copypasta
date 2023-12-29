@@ -3,6 +3,7 @@ agp = "8.2.0"
 android-compileSdk = "34"
 android-minSdk = "24"
 android-targetSdk = "34"
+androidDriver = "2.0.1"
 androidx-activityCompose = "1.8.2"
 androidx-appcompat = "1.6.1"
 androidx-constraintlayout = "2.1.4"
@@ -10,26 +11,47 @@ androidx-core-ktx = "1.12.0"
 androidx-espresso-core = "3.5.1"
 androidx-material = "1.11.0"
 androidx-test-junit = "1.1.5"
+app-androidDriver = "2.0.0"
 compose = "1.5.4"
 compose-compiler = "1.5.6"
 compose-plugin = "1.6.0-alpha01"
+coroutinesExtensions = "2.0.0-SNAPSHOT"
 exposedCore = "0.44.1"
+insert-koin-koinAndroid = "3.2.0-beta-1"
 insert-koin-koinCore = "3.5.3"
+io-insert-koin-koinAndroid = "3.5.3"
+io-insert-koin-koinCore = "3.2.0-beta-1"
 jetbrains-kotlinxDatetime = "0.5.0"
 junit = "4.13.2"
+koinAndroid = "<koin_version>"
 koinCore = "3.4.3"
 kotlin = "1.9.21"
 kotlinxDatetime = "0.4.0-wasm0"
+libraryBase = "1.13.0"
+runtime = "1.5.5"
+sqlDelightVersion = "1.5.5"
+sqldroid = "1.0.3"
+sqliteDriver = "2.0.0"
 sqliteJdbc = "3.44.0.0"
+squareup-androidDriver = "<latest_version>"
+squareup-runtime = "<latest_version>"
 
 [libraries]
+android-driver = { module = "com.squareup.sqldelight:android-driver", version.ref = "runtime" }
+android-driver-v200 = { module = "app.cash.sqldelight:android-driver", version.ref = "app-androidDriver" }
+android-driver-vlatestversion = { module = "com.squareup.sqldelight:android-driver", version.ref = "squareup-androidDriver" }
+coroutines-extensions = { module = "app.cash.sqldelight:coroutines-extensions", version.ref = "coroutinesExtensions" }
 exposed-core = { module = "org.jetbrains.exposed:exposed-core", version.ref = "exposedCore" }
 exposed-crypt = { module = "org.jetbrains.exposed:exposed-crypt", version.ref = "exposedCore" }
 exposed-dao = { module = "org.jetbrains.exposed:exposed-dao", version.ref = "exposedCore" }
 exposed-jdbc = { module = "org.jetbrains.exposed:exposed-jdbc", version.ref = "exposedCore" }
 exposed-kotlin-datetime = { module = "org.jetbrains.exposed:exposed-kotlin-datetime", version.ref = "exposedCore" }
 exposed-money = { module = "org.jetbrains.exposed:exposed-money", version.ref = "exposedCore" }
+koin-android = { module = "io.insert-koin:koin-android", version.ref = "koinAndroid" }
+koin-android-v320beta1 = { module = "io.insert-koin:koin-android", version.ref = "insert-koin-koinAndroid" }
+koin-android-v353 = { module = "io.insert-koin:koin-android", version.ref = "io-insert-koin-koinAndroid" }
 koin-core = { module = "io.insert-koin:koin-core", version.ref = "koinCore" }
+koin-core-v320beta1 = { module = "io.insert-koin:koin-core", version.ref = "io-insert-koin-koinCore" }
 koin-core-v353 = { module = "io.insert-koin:koin-core", version.ref = "insert-koin-koinCore" }
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
 kotlin-test-junit = { module = "org.jetbrains.kotlin:kotlin-test-junit", version.ref = "kotlin" }
@@ -48,7 +70,19 @@ compose-foundation = { module = "androidx.compose.foundation:foundation", versio
 compose-material = { module = "androidx.compose.material:material", version.ref = "compose" }
 kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.ref = "kotlinxDatetime" }
 kotlinx-datetime-v050 = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.ref = "jetbrains-kotlinxDatetime" }
+library-base = { module = "io.realm.kotlin:library-base", version.ref = "libraryBase" }
+native-driver = { module = "app.cash.sqldelight:native-driver", version.ref = "androidDriver" }
+runtime = { module = "com.squareup.sqldelight:runtime", version.ref = "runtime" }
+runtime-vlatestversion = { module = "com.squareup.sqldelight:runtime", version.ref = "squareup-runtime" }
+sqldelight-android-driver = { module = "app.cash.sqldelight:android-driver", version.ref = "androidDriver" }
+sqldelight-sqlite-driver = { module = "com.squareup.sqldelight:sqlite-driver", version.ref = "squareup-androidDriver" }
+sqldroid = { module = "org.sqldroid:sqldroid", version.ref = "sqldroid" }
+sqlite-driver = { module = "app.cash.sqldelight:sqlite-driver", version.ref = "androidDriver" }
+sqlite-driver-v200 = { module = "app.cash.sqldelight:sqlite-driver", version.ref = "sqliteDriver" }
 sqlite-jdbc = { module = "org.xerial:sqlite-jdbc", version.ref = "sqliteJdbc" }
+sqljs-driver = { module = "app.cash.sqldelight:sqljs-driver", version.ref = "app-androidDriver" }
+square-android-driver = { module = "com.square.sqldelight:android-driver", version.ref = "sqlDelightVersion" }
+web-worker-driver = { module = "app.cash.sqldelight:web-worker-driver", version.ref = "coroutinesExtensions" }
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }

@@ -1,4 +1,4 @@
-package com.asaad27.services
+package com.asaad27.service
 
 import com.asaad27.model.ClipboardModel
 import com.asaad27.repository.IClipboardRepository
@@ -21,7 +21,7 @@ class JvmClipboardService(
         return clipboardRepository.getAll()
     }
 
-    override suspend fun searchClipboardContents(query: String): Flow<ClipboardModel> {
+    override fun searchClipboardContents(query: String): Flow<ClipboardModel> {
         return clipboardRepository.search(query)
     }
 

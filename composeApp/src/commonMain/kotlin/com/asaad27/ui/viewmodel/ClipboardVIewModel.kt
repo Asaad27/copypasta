@@ -6,8 +6,8 @@ import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.type
 import com.asaad27.model.ClipboardModel
-import com.asaad27.services.IClipboardService
-import com.asaad27.services.ISystemClipboardService
+import com.asaad27.service.IClipboardService
+import com.asaad27.service.ISystemClipboardService
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay

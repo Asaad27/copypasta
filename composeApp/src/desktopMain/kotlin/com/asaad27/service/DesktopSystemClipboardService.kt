@@ -1,4 +1,4 @@
-package com.asaad27.services
+package com.asaad27.service
 
 import com.asaad27.model.ClipboardModel
 import com.asaad27.repository.ISystemClipboardRepository
